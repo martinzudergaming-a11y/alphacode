@@ -427,6 +427,9 @@ async fn stream_response(
             crate::alphacode_provider_core::retry_after::retry_after(response.headers());
         let upstream_body =
             crate::alphacode_base::util::http_error_body(response, "HTTP error").await;
+        if status.as_u16() == 401 {
+            crate::alphacode_base::auth::orcarouter::note_unauthorized(&api_base);
+        }
 
         // Responses-only model on a `new-api`-style gateway: the gateway told us
         // to move this model to `/v1/responses`. Rebuild the identical turn on
@@ -698,6 +701,9 @@ async fn stream_via_responses_endpoint(
             crate::alphacode_provider_core::retry_after::retry_after(response.headers());
         let upstream_body =
             crate::alphacode_base::util::http_error_body(response, "HTTP error").await;
+        if status.as_u16() == 401 {
+            crate::alphacode_base::auth::orcarouter::note_unauthorized(&api_base);
+        }
         let context_overflow = super::response_body_reports_context_overflow(&upstream_body);
         let body = if suppress_upstream_error_details {
             crate::alphacode_base::logging::warn(&format!(

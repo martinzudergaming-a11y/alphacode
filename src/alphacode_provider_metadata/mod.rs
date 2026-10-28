@@ -34,6 +34,10 @@ pub enum LoginProviderTarget {
     Bedrock,
     Azure,
     OpenAiCompatible(OpenAiCompatibleProfile),
+    /// OrcaRouter account login: OAuth 2.0 + PKCE browser authorization that
+    /// mints a durable `sk-orca-...` key for the same inference profile as
+    /// [`LoginProviderTarget::OpenAiCompatible`] with `orcarouter`.
+    OrcaRouterOAuth,
     Cursor,
     Copilot,
     Gemini,

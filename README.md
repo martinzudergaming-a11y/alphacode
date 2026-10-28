@@ -384,6 +384,7 @@ AlphaCode is model-agnostic. Start with the built-in free AI lane, or connect a 
 | AWS Bedrock | AWS credentials | Build with `--features bedrock` when required |
 | Azure | Azure AD or API key | Build with `--features azure-auth` when required |
 | OpenRouter | API key | Access to a wide range of models |
+| OrcaRouter | API key or browser login (OAuth 2.0 + PKCE) | One gateway for many models; the model list is read from `GET /v1/models`, so the picker only offers chat-capable models |
 | OpenAI-compatible endpoint | Endpoint-specific key or configuration | Add with `alphacode provider add <name>` |
 
 ### Provider and model commands

@@ -8,6 +8,20 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- OrcaRouter provider. `alphacode login --provider orcarouter` accepts a
+  `sk-orca-...` API key from the console, and
+  `alphacode login --provider orcarouter-oauth` runs an OAuth 2.0 + PKCE
+  authorization in the browser (RFC 8252 loopback redirect, S256 challenge,
+  fresh verifier and state per attempt, manual callback paste when no local
+  listener can be bound). Both paths save the credential in
+  `~/.config/alphacode/orcarouter.env` and drive the same OpenAI-compatible
+  inference profile at `https://api.orcarouter.ai/v1`. Model selection comes
+  from the live `GET /v1/models` catalog with a verified seed fallback: rows
+  that advertise only `embeddings`, `image-generation`, or `rerank` are kept
+  out of the chat picker, and per-model `input_modalities` decides vision
+  support instead of a blanket guess. OrcaRouter keys do not refresh, so a
+  401 marks the *rejected* key generation as needing re-login rather than
+  silently retrying with a key the gateway already refused.
 - Find-in-page over the transcript. `Ctrl+F` opens a search bar above the
   composer; typing filters the transcript live, `Enter` / `↑` / `↓` step
   through the hits (scrolling the viewport to each one), `Alt+C` toggles

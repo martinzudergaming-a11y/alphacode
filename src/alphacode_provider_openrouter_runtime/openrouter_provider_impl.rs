@@ -396,6 +396,18 @@ impl Provider for OpenRouterProvider {
         if let Some(supports_images) = self.static_image_input_support.get(&model_id) {
             return *supports_images;
         }
+        // Aggregator catalogs that publish per-model input modalities decide
+        // this precisely; guessing would either send image blocks to a text-only
+        // model or hide vision from a multimodal one.
+        if let Some(profile_id) = self.profile_id.as_deref()
+            && let Some(supports_images) =
+                crate::alphacode_base::provider_catalog::openai_compatible_profile_model_supports_image_input(
+                    profile_id,
+                    &model_id,
+                )
+        {
+            return supports_images;
+        }
         if Self::profile_rejects_image_input(self.profile_id.as_deref()) {
             return false;
         }

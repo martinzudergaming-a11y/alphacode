@@ -1243,7 +1243,45 @@ fn parse_model_info_value(value: &Value) -> Option<ModelInfo> {
         }),
         pricing: parse_model_pricing(object.get("pricing")),
         created: object.get("created").and_then(value_as_u64),
+        supported_endpoint_types: string_list_field(object, &["supported_endpoint_types"]),
+        endpoint_capabilities: string_list_field(object, &["endpoint_capabilities"]),
+        input_modalities: object
+            .get("architecture")
+            .and_then(Value::as_object)
+            .map(|architecture| {
+                string_list_field(architecture, &["input_modalities", "modality_input"])
+            })
+            .unwrap_or_default(),
     })
+}
+
+/// Read a list-of-strings field, tolerating the two shapes gateways use:
+/// a JSON array, or a comma/space separated string.
+fn string_list_field(object: &serde_json::Map<String, Value>, keys: &[&str]) -> Vec<String> {
+    for key in keys {
+        let Some(value) = object.get(*key) else {
+            continue;
+        };
+        match value {
+            Value::Array(items) => {
+                return items
+                    .iter()
+                    .filter_map(Value::as_str)
+                    .map(|item| item.trim().to_ascii_lowercase())
+                    .filter(|item| !item.is_empty())
+                    .collect();
+            }
+            Value::String(text) => {
+                return text
+                    .split([',', ' ', '|'])
+                    .map(|item| item.trim().to_ascii_lowercase())
+                    .filter(|item| !item.is_empty())
+                    .collect();
+            }
+            _ => {}
+        }
+    }
+    Vec::new()
 }
 
 fn first_u64_field(object: &serde_json::Map<String, Value>, keys: &[&str]) -> Option<u64> {
@@ -3554,6 +3592,10 @@ mod openrouter_responses_fallback;
 mod openrouter_sse_stream;
 
 #[cfg(test)]
+#[path = "orcarouter_live_tests.rs"]
+mod orcarouter_live_tests;
+
+#[cfg(test)]
 mod initial_model_tests {
     use super::{DEFAULT_API_BASE, DEFAULT_MODEL, initial_model_for_runtime};
 
@@ -3947,6 +3989,7 @@ mod llamacpp_compat_tests {
             context_length: Some(131_072),
             pricing: ModelPricing::default(),
             created: None,
+            ..Default::default()
         });
 
         record_learned_context_limit(&provider.api_base, model, 4096);

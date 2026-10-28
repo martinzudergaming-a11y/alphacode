@@ -1647,6 +1647,52 @@ mod tests {
     }
 
     #[test]
+    fn orcarouter_logins_share_one_lifecycle_identity() {
+        let _sandbox =
+            crate::alphacode_base::auth::test_sandbox::AuthTestSandbox::new().expect("sandbox");
+
+        // Both OrcaRouter entry points must normalize to the *same* identity:
+        // one inference profile, one credential slot, one catalog namespace.
+        for hint in [
+            "orcarouter",
+            "orca-router",
+            "orcarouter-api",
+            "orcarouter-oauth",
+            "orca-router-auth",
+            "orcarouter-pkce",
+            "orcarouter-auth",
+        ] {
+            assert_eq!(
+                normalized_auth_provider_id(Some(hint)),
+                Some("orcarouter"),
+                "{hint} must normalize to the shared OrcaRouter profile"
+            );
+        }
+        assert_eq!(
+            model_switch_request_for_provider_id(
+                Some("orcarouter-oauth"),
+                "mock",
+                "orcarouter/auto"
+            ),
+            "orcarouter:orcarouter/auto"
+        );
+        assert_eq!(
+            provider_display_label(Some("orcarouter-oauth")).as_deref(),
+            Some("OrcaRouter")
+        );
+
+        let activation = activate_auth_change(&AuthActivationRequest::new(
+            None,
+            Some(AuthChanged::new("orcarouter-oauth")),
+        ));
+        assert_eq!(activation.provider_id.as_deref(), Some("orcarouter"));
+        assert_eq!(
+            std::env::var("ALPHACODE_OPENROUTER_API_BASE").as_deref(),
+            Ok("https://api.orcarouter.ai/v1")
+        );
+    }
+
+    #[test]
     fn alphacode_auth_lifecycle_matches_only_managed_subscription_routes() {
         let activation = AuthActivationResult {
             provider_id: Some("alphacode".to_string()),
@@ -2043,6 +2089,7 @@ mod tests {
                     context_length: None,
                     pricing: Default::default(),
                     created: Some(1_700_000_000),
+                    ..Default::default()
                 },
                 crate::alphacode_provider_openrouter::ModelInfo {
                     id: "qwen-3-235b-a22b-instruct-2507".to_string(),
@@ -2050,6 +2097,7 @@ mod tests {
                     context_length: None,
                     pricing: Default::default(),
                     created: Some(1_800_000_000),
+                    ..Default::default()
                 },
             ],
             Some("https://api.cerebras.ai/v1"),
